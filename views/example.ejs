@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Digit Recognizer</title>
+    <script src="/javascripts/jquery.min.js"></script>
+    <style type="text/css">
+      #container { position: relative; }
+      #imageView { border: 1px solid #000; }
+      #imageTemp { position: absolute; top: 1px; left: 1px; }
+      div { display:inline-block; float: left;}
+    </style>
+  </head>
+  <body>
+    <a id="yhat_logo" href="http://promo.yhathq.com/yhat-a-launch/" title="yhathq.com"><img src="https://s3.amazonaws.com/yhat/glamp/yhat_clear_bkg.png"></a>
+    <hr>
+    <h2 id="number">Draw a Number</h2>
+      <div>
+        <button id="predict">Predict</button>
+        <button id="clear">Clear</button>
+      </div>
+
+
+    <div id="container">
+      <div>
+        <canvas id="imageView" width="500px;" height="500px;">
+        </canvas>
+      </div>
+      <div>
+        <h2>Help make the classifier better!</h2>
+        <h2>Click on the number you drew!</h2>
+        <table id="results-table" border=1 valign="top">
+          <tr>
+            <td>Digit</td>
+            <td>Probability</td>
+          </tr>
+        </table>
+        <div id="results">
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript" src="/javascripts/example5.js"></script>
+    <script type="text/javascript">
+      var canvas = document.getElementById('imageView');
+      var context = canvas.getContext('2d');
+      var n = Math.floor(Math.random() * 10);
+      $("#number").text("Draw a Number");
+      $("#clear").click();
+      $("#send").click(function(e) {
+        var img = canvas.toDataURL();
+        $.post("/", {img: img, n: n}, function() {
+            window.location.replace("/");
+        })
+        return false;
+      });
+      $("#predict").click(function(e) {
+        var img = canvas.toDataURL();
+        $.post("/predict", {img: img, n: n}, function(d) {
+           $("#results").children().remove()
+           var rows = ["<tr><td>Digit</td><td>Probability</td></tr>"]
+           for (var i = 0; i < 10; i++) {
+              link = "<button id='btn-" + i + "' class='feedback' href='/feedback'>" + i + "</button>"
+              row = "<tr><td>" + link + "</td>" + "<td>" + d.prediction.probs['prob_' + i] + "</td></tr>";
+              rows.push(row);
+           }
+           $("#results-table").children().remove();
+           $("#results-table").append(rows.join(""));
+           $(".feedback").click(function(e) {
+             var img = canvas.toDataURL();
+             var n = parseInt($(this).text());
+             $.post("/", {img: img, n: n}, function() {
+                window.location.replace("/");
+             })
+           });
+        })
+        return false;
+        }); 
+      $("#clear").click(function(e) {
+        context.fillStyle = 'white';
+        context.fillRect(0, 0, 500, 500);
+      });
+
+    </script>
+  </body>
+</html>
+
